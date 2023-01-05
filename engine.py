@@ -32,7 +32,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         targets = targets.to(device, non_blocking=True)
 
         if mixup_fn is not None:
-            samples, targets = mixup_fn(samples, targets)
+            samples, targets = mixup_fn(samples, targets, device)
             
         if args.bce_loss:
             targets = targets.gt(0.0).type(targets.dtype)

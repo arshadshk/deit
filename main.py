@@ -10,6 +10,8 @@ import json
 
 from pathlib import Path
 
+import sys#@
+sys.path.append( "/Users/arshad/deit/Position-Prediction-Pretraining-MP3/src/pytorch-image-models/" )#@
 from timm.data import Mixup
 from timm.models import create_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
@@ -39,7 +41,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='deit_base_patch16_224', type=str, metavar='MODEL',
                         help='Name of model to train')
-    parser.add_argument('--input-size', default=224, type=int, help='images input size')
+    parser.add_argument('--input-size', default=32, type=int, help='images input size')
 
     parser.add_argument('--drop', type=float, default=0.0, metavar='PCT',
                         help='Dropout rate (default: 0.)')
@@ -155,6 +157,10 @@ def get_args_parser():
                         help='dataset path')
     parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
                         type=str, help='Image Net dataset path')
+    
+    parser.add_argument('--datadownload', default='false',
+                        type=str, help='Download data')
+    
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
                         type=str, help='semantic granularity')
@@ -263,7 +269,9 @@ def main(args):
         drop_rate=args.drop,
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
-        img_size=args.input_size
+        img_size=args.input_size,
+        attn_mask=True, 
+        eta=0.5
     )
 
                     
