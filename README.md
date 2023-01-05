@@ -1,5 +1,8 @@
-# Data-Efficient architectures and training for Image classification
-
+# Data-Efficient architectures and training for Image classification 
+# Attention Masking for VIT
+Clone ViT models(timm) for attention masking from : https://github.com/arshadshk/pytorch-image-models/tree/attention_masking  
+Make sure to add path to the cloned timm dir [here](https://github.com/arshadshk/deit/blob/attention_masking/main.py#L14)  
+<br>
 This repository contains PyTorch evaluation code, training code and pretrained models for the following papers:
 <details>
 <summary>

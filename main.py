@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 import sys#@
-sys.path.append( "/Users/arshad/deit/Position-Prediction-Pretraining-MP3/src/pytorch-image-models/" )#@
+sys.path.append( "path/for/timm/dir" )#@
 from timm.data import Mixup
 from timm.models import create_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
