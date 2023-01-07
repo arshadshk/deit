@@ -20,7 +20,7 @@ from timm.optim import create_optimizer
 from timm.utils import NativeScaler, get_state_dict, ModelEma
 
 from datasets import build_dataset
-from engine import train_one_epoch, evaluate
+from engine import train_one_epoch, evaluate, evaluate_pretrain_position_prediction
 from losses import DistillationLoss
 from samplers import RASampler
 from augment import new_data_aug_generator
@@ -53,6 +53,10 @@ def get_args_parser():
     parser.set_defaults(model_ema=True)
     parser.add_argument('--model-ema-decay', type=float, default=0.99996, help='')
     parser.add_argument('--model-ema-force-cpu', action='store_true', default=False, help='')
+
+    parser.add_argument('--attn_mask', default=False, help='Masking out tokens in attn')
+    parser.add_argument('--eta', default=0., type=float, help='Ratio of context tokens, between 0-1')
+    parser.add_argument('--patch_stride', default=0, type=int, help='by default patch_stride equals path_size.patch_stride is used in patch embedding')
 
     # Optimizer parameters
     parser.add_argument('--opt', default='adamw', type=str, metavar='OPTIMIZER',
@@ -270,8 +274,9 @@ def main(args):
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
         img_size=args.input_size,
-        attn_mask=True, 
-        eta=0.5
+        attn_mask=args.attn_mask, # TODO take from args
+        eta=args.eta,         # TODO take from args  
+        patch_stride=args.patch_stride
     )
 
                     
@@ -393,7 +398,7 @@ def main(args):
     # wrap the criterion in our custom DistillationLoss, which
     # just dispatches to the original criterion if args.distillation_type is 'none'
     criterion = DistillationLoss(
-        criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau
+        criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau, attn_mask=args.attn_mask
     )
 
     output_dir = Path(args.output_dir)
@@ -448,7 +453,7 @@ def main(args):
                 }, checkpoint_path)
              
 
-        test_stats = evaluate(data_loader_val, model, device)
+        test_stats = evaluate_pretrain_position_prediction(data_loader_val, model, device)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         
         if max_accuracy < test_stats["acc1"]:

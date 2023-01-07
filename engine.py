@@ -53,8 +53,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         is_second_order = hasattr(optimizer, 'is_second_order') and optimizer.is_second_order
         loss_scaler(loss, optimizer, clip_grad=max_norm,
                     parameters=model.parameters(), create_graph=is_second_order)
-
-        torch.cuda.synchronize()
+        if str(device) != "cpu":
+            torch.cuda.synchronize()
         if model_ema is not None:
             model_ema.update(model)
 
@@ -91,6 +91,49 @@ def evaluate(data_loader, model, device):
         metric_logger.update(loss=loss.item())
         metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
         metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'
+          .format(top1=metric_logger.acc1, top5=metric_logger.acc5, losses=metric_logger.loss))
+
+    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+
+@torch.no_grad()
+def evaluate_pretrain_position_prediction(data_loader, model, device):
+    criterion = torch.nn.CrossEntropyLoss()
+
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    header = 'Test:'
+
+    # switch to evaluation mode
+    model.eval()
+
+    for images, target in metric_logger.log_every(data_loader, 10, header):
+        images = images.to(device, non_blocking=True)
+        target = target.to(device, non_blocking=True)
+
+        # compute output
+        with torch.cuda.amp.autocast():
+            output = model(images)
+
+            output = torch.softmax(output[:,1:,:], -1) # ignoring the cls for loss computation ( until authors clarify how cls is handled during training )
+            B,N,_ = output.shape
+            labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1)
+            loss = criterion(output, labels)
+
+        # calculating acc1 only
+        _, ind_1 = output.topk(1, -1)
+        ind_1 = ind_1.squeeze(-1).flatten() # b,n
+        labels = labels.squeeze(-1).flatten() # b,n
+        acc1 = (ind_1 == labels).sum() / labels.shape[0]
+        acc5 = torch.tensor( 0 )
+
+        batch_size = images.shape[0]
+        metric_logger.update(loss=loss.item())
+        metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+        break
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f} loss {losses.global_avg:.3f}'

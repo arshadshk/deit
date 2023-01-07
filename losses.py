@@ -13,7 +13,7 @@ class DistillationLoss(torch.nn.Module):
     taking a teacher model prediction and using it as additional supervision.
     """
     def __init__(self, base_criterion: torch.nn.Module, teacher_model: torch.nn.Module,
-                 distillation_type: str, alpha: float, tau: float):
+                 distillation_type: str, alpha: float, tau: float, attn_mask: bool = False):
         super().__init__()
         self.base_criterion = base_criterion
         self.teacher_model = teacher_model
@@ -21,6 +21,7 @@ class DistillationLoss(torch.nn.Module):
         self.distillation_type = distillation_type
         self.alpha = alpha
         self.tau = tau
+        self.attn_mask = attn_mask
 
     def forward(self, inputs, outputs, labels):
         """
@@ -35,6 +36,9 @@ class DistillationLoss(torch.nn.Module):
         if not isinstance(outputs, torch.Tensor):
             # assume that the model outputs a tuple of [outputs, outputs_kd]
             outputs, outputs_kd = outputs
+        outputs = torch.softmax(outputs[:,1:,:], -1) # ignoring the cls for loss computation ( until authors clarify how cls is handled during training )
+        B,N,_ = outputs.shape
+        labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1)
         base_loss = self.base_criterion(outputs, labels)
         if self.distillation_type == 'none':
             return base_loss
