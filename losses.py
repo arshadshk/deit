@@ -38,7 +38,7 @@ class DistillationLoss(torch.nn.Module):
             outputs, outputs_kd = outputs
         outputs = torch.softmax(outputs[:,1:,:], -1) # ignoring the cls for loss computation ( until authors clarify how cls is handled during training )
         B,N,_ = outputs.shape
-        labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1)
+        labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1).to( outputs.device )
         base_loss = self.base_criterion(outputs, labels)
         if self.distillation_type == 'none':
             return base_loss

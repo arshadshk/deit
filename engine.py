@@ -119,7 +119,7 @@ def evaluate_pretrain_position_prediction(data_loader, model, device):
 
             output = torch.softmax(output[:,1:,:], -1) # ignoring the cls for loss computation ( until authors clarify how cls is handled during training )
             B,N,_ = output.shape
-            labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1)
+            labels = torch.arange(0,N, dtype=torch.long).unsqueeze(0).repeat(B,1).to( output.device )
             loss = criterion(output, labels)
 
         # calculating acc1 only
