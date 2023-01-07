@@ -11,7 +11,8 @@ import json
 from pathlib import Path
 
 import sys#@
-sys.path.append( "path/for/timm/dir" )#@
+import os
+sys.path.append( "./pytorch-image-models/" )#@
 from timm.data import Mixup
 from timm.models import create_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
