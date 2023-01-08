@@ -275,8 +275,8 @@ def main(args):
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
         img_size=args.input_size,
-        attn_mask=args.attn_mask, # TODO take from args
-        eta=args.eta,         # TODO take from args  
+        attn_mask=args.attn_mask,
+        eta=args.eta,
         patch_stride=args.patch_stride
     )
 
