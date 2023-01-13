@@ -6,7 +6,7 @@ import json
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import ImageFolder, default_loader
 import sys#@
-sys.path.append( "/Users/arshad/deit/pytorch-image-models/" )#@
+sys.path.append( "./pytorch-image-models/" )#@
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import create_transform
 
